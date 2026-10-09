@@ -1,0 +1,59 @@
+package me.chetan.life
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import me.chetan.life.ui.theme.LifeTheme
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            LifeTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    MainView(
+                        modifier = Modifier.padding(innerPadding)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MainView(modifier: Modifier = Modifier) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "home") {
+        composable("home") {
+            HomeView(
+                modifier,
+                onAddSmallTask = { navController.navigate("small") },
+                onAddMediumTask = { navController.navigate("medium") },
+                onAddLongTask = { navController.navigate("long") },
+                onAddVeryLongTask = { navController.navigate("verylong") })
+        }
+        composable("small"){
+            AddSmallTask(modifier)
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainViewPreview() {
+    LifeTheme {
+        MainView(Modifier.fillMaxSize())
+    }
+}
