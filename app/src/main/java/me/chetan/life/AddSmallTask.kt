@@ -35,18 +35,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
+import me.chetan.life.storage.AppDatabase
+import me.chetan.life.storage.SmallTaskRelative
+import java.lang.Integer.parseInt
+import java.time.LocalTime
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSmallTask(modifier: Modifier = Modifier) {
+    val coroutineScope = rememberCoroutineScope()
+
     var taskName by remember { mutableStateOf("") }
     var isRelative by remember { mutableStateOf(true) }
 
@@ -64,6 +73,8 @@ fun AddSmallTask(modifier: Modifier = Modifier) {
         initialMinute = currentTime.get(Calendar.MINUTE),
     )
     var pickingTime by remember { mutableStateOf(false) }
+
+    val db = AppDatabase.getDatabase(LocalContext.current)
 
     Column(
         modifier = modifier
@@ -152,7 +163,11 @@ fun AddSmallTask(modifier: Modifier = Modifier) {
 
         // Time Selection Button
         OutlinedButton(onClick = { pickingTime = true }) {
-            Text(text = "Set Time: ${timePickerState.hour}:${timePickerState.minute.toString().padStart(2, '0')}")
+            Text(
+                text = "Set Time: ${timePickerState.hour}:${
+                    timePickerState.minute.toString().padStart(2, '0')
+                }"
+            )
         }
 
         if (pickingTime) {
@@ -195,6 +210,16 @@ fun AddSmallTask(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
+                if(isRelative){
+                    coroutineScope.launch{
+                        db.smallTaskRelativeDao().insert(SmallTaskRelative(
+                            taskName = taskName,
+                            interval = parseInt(interval),
+                            unit = selectedUnit,
+                            time = LocalTime.of(timePickerState.hour,timePickerState.minute)
+                        ))
+                    }
+                }
                 println("Saving Task")
             },
             modifier = Modifier.fillMaxWidth(),
