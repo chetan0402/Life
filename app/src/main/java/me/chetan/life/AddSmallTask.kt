@@ -1,5 +1,9 @@
 package me.chetan.life
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,6 +58,7 @@ import java.util.Calendar
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSmallTask(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     var taskName by remember { mutableStateOf("") }
@@ -75,6 +80,8 @@ fun AddSmallTask(modifier: Modifier = Modifier) {
     var pickingTime by remember { mutableStateOf(false) }
 
     val db = AppDatabase.getDatabase(LocalContext.current)
+
+    val alarmManager = LocalContext.current.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
 
     Column(
         modifier = modifier
@@ -218,6 +225,20 @@ fun AddSmallTask(modifier: Modifier = Modifier) {
                             unit = selectedUnit,
                             time = LocalTime.of(timePickerState.hour,timePickerState.minute)
                         ))
+                        val whenTrigger=Calendar.getInstance()
+                        whenTrigger.set(Calendar.HOUR_OF_DAY,timePickerState.hour)
+                        whenTrigger.set(Calendar.MINUTE,timePickerState.minute)
+                        whenTrigger.set(Calendar.SECOND,0)
+                        whenTrigger.set(Calendar.MILLISECOND,0)
+                        if(whenTrigger.timeInMillis<Calendar.getInstance().timeInMillis){
+                            whenTrigger.add(Calendar.DATE,1)
+                        }
+                        val pendingIntent= PendingIntent.getBroadcast(context,0,
+                            Intent(context, AlarmReceiver::class.java).apply {
+                                putExtra("Type","SmallTaskRelative")
+                                putExtra("TaskName",taskName)
+                            },PendingIntent.FLAG_IMMUTABLE)
+                        alarmManager?.setExact(AlarmManager.RTC,whenTrigger.timeInMillis,pendingIntent)
                     }
                 }
                 println("Saving Task")
